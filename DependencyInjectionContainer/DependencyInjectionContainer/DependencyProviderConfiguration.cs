@@ -45,6 +45,11 @@ namespace DependencyInjectionContainer
             Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
 
             IsSingleton[typeof(TDependency)] = isSingleton;
+
+            if (typeof(TDependency).IsGenericType)
+            {
+                Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
+            }
         }
     }
 }

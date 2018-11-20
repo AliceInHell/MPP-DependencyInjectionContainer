@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -25,27 +26,47 @@ namespace DependencyInjectionContainer
         }
 
         /// <summary>
-        /// Create container
+        /// Create a container
         /// </summary>
-        /// <typeparam name="TImplementation">Implementation to create</typeparam>
+        /// <typeparam name="TDependency">Implementation to create</typeparam>
         /// <returns>New container</returns>
-        public IEnumerable<TImplementation> Resolve<TImplementation>()
+        public TDependency Resolve<TDependency>()
         {
-            if (_config.Dependencies.ContainsKey(typeof(TImplementation)))
+            return (TDependency)Resolve(typeof(TDependency));
+        }
+
+        private object Resolve(Type t)
+        {
+            if (t.IsGenericType && t is IEnumerable)
             {
-                List<TImplementation> result = new List<TImplementation>();
-
-                foreach (var item in _config.Dependencies)
+                if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0].GetType()))
                 {
-                    result.Add((TImplementation)Create(typeof(TImplementation)));
-                }
+                    object result = Activator.CreateInstance(typeof(List<>).MakeGenericType(t.GenericTypeArguments[0]));
 
-                return result.AsEnumerable<TImplementation>();
+                    foreach (Type item in _config.Dependencies[t])
+                    {
+                        ((IList)result).Add(Create(item));
+                    }
+
+                    return result;
+                }
+                else
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Cant create an instance of{0}", t));
+                }
             }
             else
             {
-                throw new InvalidOperationException(string.Format(
-                    "Cant create an instance of{0}", typeof(TImplementation)));
+                if (_config.Dependencies.ContainsKey(t))
+                {
+                    return Create(_config.Dependencies[t][0]);
+                }
+                else
+                {
+                    throw new InvalidOperationException(string.Format(
+                        "Cant create an instance of{0}", t));
+                }
             }
         }
 
@@ -58,10 +79,10 @@ namespace DependencyInjectionContainer
         {
             ConstructorInfo[] constructors = implementation.GetConstructors();
 
-            ConstructorInfo constructor = constructors                
+            ConstructorInfo constructor = constructors
                 .OrderBy(constr => constr.GetParameters().Length)
-                .Last();            
-            
+                .Last();
+
             if (constructor != null)
             {
                 ParameterInfo[] parameters = constructor.GetParameters();
@@ -70,18 +91,35 @@ namespace DependencyInjectionContainer
 
                 foreach (ParameterInfo pi in parameters)
                 {
-                    if (_config.Dependencies.ContainsKey(pi.GetType()))
+                    if (pi.ParameterType.IsGenericType)
                     {
-                        tmp[i++] = Create(pi.ParameterType);
+                        if (_config.Dependencies.ContainsKey(pi.ParameterType.GetGenericTypeDefinition()))                        
+                        {
+                            tmp[i++] = Resolve(pi.ParameterType.GetGenericTypeDefinition()
+                                .MakeGenericType(GetDependency(pi.ParameterType.GenericTypeArguments[0])));                            
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(string.Format(
+                                "Cant create an instance of{0}", implementation));
+                        }
                     }
                     else
                     {
-                        throw new InvalidOperationException(string.Format(
-                            "Cant create an instance of{0}", implementation));
-                    }                    
+                        if (_config.Dependencies.ContainsKey(pi.ParameterType))
+                        {
+                            tmp[i++] = Resolve(pi.ParameterType);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(string.Format(
+                                "Cant create an instance of{0}", implementation));
+                        }
+                    }
                 }
 
-                return constructor.Invoke(tmp);
+                var result = constructor.Invoke(tmp);
+                return result;
             }
             else
             {
@@ -89,5 +127,22 @@ namespace DependencyInjectionContainer
                     "Cant create an instance of{0}", implementation));
             }
         }
+
+        private Type GetDependency(Type t)
+        {
+            foreach(var item in _config.Dependencies)
+            {
+                foreach(Type element in item.Value)
+                {
+                    if (element.Equals(t))
+                    {
+                        return item.Key;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException(string.Format(
+                    "Cant create an instance of{0}", t));
+        }        
     }
 }
