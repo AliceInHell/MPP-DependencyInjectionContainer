@@ -36,14 +36,14 @@ namespace DependencyInjectionContainer
         }
 
         private object Resolve(Type t)
-        {
-            if (t.IsGenericType && t is IEnumerable)
+        {                       
+            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
-                if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0].GetType()))
+                if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]))
                 {
-                    object result = Activator.CreateInstance(typeof(List<>).MakeGenericType(t.GenericTypeArguments[0]));
-
-                    foreach (Type item in _config.Dependencies[t])
+                    var result = Activator.CreateInstance(typeof(List<>).MakeGenericType(t.GenericTypeArguments[0]));
+                    
+                    foreach (Type item in _config.Dependencies[t.GenericTypeArguments[0]])
                     {
                         ((IList)result).Add(Create(item));
                     }
@@ -77,6 +77,11 @@ namespace DependencyInjectionContainer
         /// <returns>Created implementation</returns>
         private object Create(Type implementation)
         {
+            if (implementation.IsGenericType && _config.Dependencies.ContainsKey(implementation.GenericTypeArguments[0]))
+            {
+                implementation = implementation.GetGenericTypeDefinition().MakeGenericType(_config.Dependencies[implementation.GenericTypeArguments[0]][0]);
+            }
+
             ConstructorInfo[] constructors = implementation.GetConstructors();
 
             ConstructorInfo constructor = constructors
