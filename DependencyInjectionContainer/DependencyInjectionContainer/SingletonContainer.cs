@@ -12,6 +12,8 @@ namespace DependencyInjectionContainer
     /// <typeparam name="TDependency">Instance type</typeparam>
     public sealed class SingletonContainer
     {
+        #region Fields
+
         /// <summary>
         /// Object-locker
         /// </summary>
@@ -36,6 +38,8 @@ namespace DependencyInjectionContainer
         /// Status
         /// </summary>
         private bool _isBusy;
+
+        #endregion
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SingletonContainer{T}"/> class
@@ -77,14 +81,14 @@ namespace DependencyInjectionContainer
                 {
                     if (_instance == null)
                     {
-                        lock(_boolLocker)
+                        lock (_boolLocker)
                         {
                             IsBusy = true;
                         }
 
                         _instance = provider.Resolve(_instanceType);
 
-                        lock(_boolLocker)
+                        lock (_boolLocker)
                         {
                             IsBusy = false;
                         }

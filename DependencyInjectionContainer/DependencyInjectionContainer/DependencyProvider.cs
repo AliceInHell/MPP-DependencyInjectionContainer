@@ -35,6 +35,8 @@ namespace DependencyInjectionContainer
             return (TDependency)Resolve(typeof(TDependency));
         }
 
+        #region Methods
+
         /// <summary>
         /// Deside is it an IEnumerable<>, creating implementation
         /// </summary>
@@ -184,6 +186,8 @@ namespace DependencyInjectionContainer
                     }
                 }
             }*/
-        }        
+        }
+
+        #endregion
     }
 }
