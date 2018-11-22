@@ -87,5 +87,26 @@ namespace DependencyInjectionContainerUnitTests
 
             Assert.IsTrue(anotherBaz.BarService == bar);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void DependencyProviderIEnumerableExeptionTest()
+        {
+            _provider.Resolve<IFooService>();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void DependencyProviderIEnumerableCountExeptionTest()
+        {
+            _provider.Resolve<IEnumerable<IBarService>>();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void DependencyProviderNotRegisterDependencyExeptionTest()
+        {
+            _provider.Resolve<IFaker>();
+        }
     }
 }
