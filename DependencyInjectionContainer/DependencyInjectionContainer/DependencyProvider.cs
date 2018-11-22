@@ -41,7 +41,7 @@ namespace DependencyInjectionContainer
         /// <param name="t">Implementaiton type</param>
         /// <returns>Implementation</returns>
         private object Resolve(Type t)
-        {                       
+        {
             if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
                 if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]) &&
@@ -53,17 +53,37 @@ namespace DependencyInjectionContainer
                     {
                         ((IList)result).Add(Create(item));
                     }
-                    
+
                     return result;
-                }                
+                }
             }
             else
             {
-                if (_config.Dependencies.ContainsKey(t))
+                if (t.IsGenericType)
                 {
-                    return Create(_config.Dependencies[t][0]);
-                }                
-            }
+                    if (_config.Dependencies.ContainsKey(t.GetGenericTypeDefinition()) &&
+                        _config.Dependencies.ContainsKey(t.GenericTypeArguments[0]))
+                    {
+                        return Create(_config.Dependencies[t.GetGenericTypeDefinition().MakeGenericType(
+                            _config.Dependencies[t.GenericTypeArguments[0]][0])][0]);
+                    }
+                    else
+                    {
+                        if (_config.Dependencies.ContainsKey(t.GetGenericTypeDefinition()) &&
+                        _config.Dependencies.ContainsKey(GetDependency(t.GenericTypeArguments[0])))
+                        {
+                            return Create(_config.Dependencies[t][0]);
+                        }
+                    }
+                }
+                else
+                {
+                    if (_config.Dependencies.ContainsKey(t))
+                    {
+                        return Create(_config.Dependencies[t][0]);
+                    }
+                }
+            }           
 
             throw new InvalidOperationException(string.Format(
                         "Cant create an instance of{0}", t));
@@ -98,7 +118,7 @@ namespace DependencyInjectionContainer
                     if (pi.ParameterType.IsGenericType)
                     {
                         if (_config.Dependencies.ContainsKey(pi.ParameterType.GetGenericTypeDefinition()) &&
-                            _config.Dependencies.ContainsKey(pi.ParameterType.GenericTypeArguments[0]))                     
+                            _config.Dependencies.ContainsKey(GetDependency(pi.ParameterType.GenericTypeArguments[0])))                     
                         {
                             tmp[i++] = Resolve(pi.ParameterType.GetGenericTypeDefinition()
                                 .MakeGenericType(GetDependency(pi.ParameterType.GenericTypeArguments[0])));                            
