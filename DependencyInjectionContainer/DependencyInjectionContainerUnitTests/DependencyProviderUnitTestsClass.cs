@@ -19,7 +19,7 @@ namespace DependencyInjectionContainerUnitTests
             _config = new DependencyProviderConfiguration();
             _config.Register<IFooService, FooImplementation<BarImplementation>>(false);
             _config.Register<IFooService, AnotherFooImplementation>(false);
-            _config.Register<IBarService, BarImplementation>(false);
+            _config.Register<IBarService, BarImplementation>(true);
             _config.Register<IBazService<BarImplementation>, AnotherBazImplementation<BarImplementation>>(false);
 
             _provider = new DependencyProvider(_config);
@@ -68,6 +68,24 @@ namespace DependencyInjectionContainerUnitTests
         {
             var actual = _provider.Resolve<IBarService>();
             Assert.IsTrue(actual.GetType().Equals(typeof(BarImplementation)));
+        }
+
+        [TestMethod]
+        public void DependencyProviderSingletonContainerTest()
+        {
+            var actual = _provider.Resolve<IBarService>();
+            Assert.IsTrue(actual != null);
+        }
+
+        [TestMethod]
+        public void DependencyProviderSingletonBarImplementationTest()
+        {
+            AnotherBazImplementation<BarImplementation> anotherBaz =
+                (AnotherBazImplementation<BarImplementation>)_provider.Resolve<IBazService<BarImplementation>>();
+
+            BarImplementation bar = (BarImplementation)_provider.Resolve<IBarService>();
+
+            Assert.IsTrue(anotherBaz.BarService == bar);
         }
     }
 }
