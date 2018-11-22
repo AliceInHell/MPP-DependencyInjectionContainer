@@ -90,7 +90,7 @@ namespace DependencyInjectionContainer
                 }
                 else
                 {
-                    if (_config.Dependencies.ContainsKey(t))
+                    if (_config.Dependencies.ContainsKey(t) && _config.Dependencies[t].Count == 1)
                     {
                         return Create(_config.Dependencies[t][0]);
                     }
