@@ -17,6 +17,7 @@ namespace DependencyInjectionContainer
         {
             Dependencies = new Dictionary<Type, List<Type>>();
             IsSingleton = new Dictionary<Type, bool>();
+            Singletons = new Dictionary<Type, object>();
         }
 
         /// <summary>
@@ -61,7 +62,7 @@ namespace DependencyInjectionContainer
                 if (!IsSingleton.ContainsKey(typeof(TImplementation)))
                 {
                     IsSingleton[typeof(TImplementation)] = isSingleton;
-                    Singletons[typeof(TImplementation)] = new SingletonContainer<TImplementation>();
+                    Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
                 }
                 else
                 {

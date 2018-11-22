@@ -30,8 +30,8 @@ namespace DependencyInjectionContainer
         /// </summary>
         /// <typeparam name="TDependency">Implementation to create</typeparam>
         /// <returns>New container</returns>
-        public TDependency Resolve<TDependency>()
-        {
+        public TDependency Resolve<TDependency>() where TDependency : class
+        {          
             return (TDependency)Resolve(typeof(TDependency));
         }
 
@@ -40,8 +40,20 @@ namespace DependencyInjectionContainer
         /// </summary>
         /// <param name="t">Implementaiton type</param>
         /// <returns>Implementation</returns>
-        private object Resolve(Type t)
+        internal object Resolve(Type t)
         {
+            if (_config.Dependencies.ContainsKey(t) && _config.Dependencies[t].Count == 1)
+            {
+                if (_config.IsSingleton.ContainsKey(_config.Dependencies[t][0]))
+                {
+                    if (_config.IsSingleton[_config.Dependencies[t][0]] 
+                        && !((SingletonContainer)(_config.Singletons[_config.Dependencies[t][0]])).IsBusy)
+                    {
+                        return ((SingletonContainer)(_config.Singletons[_config.Dependencies[t][0]])).GetInstance(this);
+                    }
+                }
+            }
+
             if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
                 if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]) &&
