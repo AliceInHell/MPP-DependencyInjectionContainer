@@ -35,39 +35,38 @@ namespace DependencyInjectionContainer
             return (TDependency)Resolve(typeof(TDependency));
         }
 
+        /// <summary>
+        /// Deside is it an IEnumerable<>, creating implementation
+        /// </summary>
+        /// <param name="t">Implementaiton type</param>
+        /// <returns>Implementation</returns>
         private object Resolve(Type t)
         {                       
             if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
-                if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]))
+                if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]) &&
+                    _config.Dependencies[t.GenericTypeArguments[0]].Count > 1)
                 {
-                    var result = Activator.CreateInstance(typeof(List<>).MakeGenericType(t.GenericTypeArguments[0]));
-                    
+                    object result = Activator.CreateInstance(typeof(List<>).MakeGenericType(t.GenericTypeArguments[0]));
+
                     foreach (Type item in _config.Dependencies[t.GenericTypeArguments[0]])
                     {
                         ((IList)result).Add(Create(item));
                     }
-
+                    
                     return result;
-                }
-                else
-                {
-                    throw new InvalidOperationException(string.Format(
-                        "Cant create an instance of{0}", t));
-                }
+                }                
             }
             else
             {
                 if (_config.Dependencies.ContainsKey(t))
                 {
                     return Create(_config.Dependencies[t][0]);
-                }
-                else
-                {
-                    throw new InvalidOperationException(string.Format(
-                        "Cant create an instance of{0}", t));
-                }
+                }                
             }
+
+            throw new InvalidOperationException(string.Format(
+                        "Cant create an instance of{0}", t));
         }
 
         /// <summary>
@@ -75,14 +74,14 @@ namespace DependencyInjectionContainer
         /// </summary>
         /// <typeparam name="TImplementation">Creating type</typeparam>
         /// <returns>Created implementation</returns>
-        private object Create(Type implementation)
-        {
-            if (implementation.IsGenericType && _config.Dependencies.ContainsKey(implementation.GenericTypeArguments[0]))
+        private object Create(Type t)
+        {            
+            if (t.IsGenericType && _config.Dependencies.ContainsKey(t.GenericTypeArguments[0]))
             {
-                implementation = implementation.GetGenericTypeDefinition().MakeGenericType(_config.Dependencies[implementation.GenericTypeArguments[0]][0]);
+                t = t.GetGenericTypeDefinition().MakeGenericType(_config.Dependencies[t.GenericTypeArguments[0]][0]);
             }
 
-            ConstructorInfo[] constructors = implementation.GetConstructors();
+            ConstructorInfo[] constructors = t.GetConstructors();
 
             ConstructorInfo constructor = constructors
                 .OrderBy(constr => constr.GetParameters().Length)
@@ -98,7 +97,8 @@ namespace DependencyInjectionContainer
                 {
                     if (pi.ParameterType.IsGenericType)
                     {
-                        if (_config.Dependencies.ContainsKey(pi.ParameterType.GetGenericTypeDefinition()))                        
+                        if (_config.Dependencies.ContainsKey(pi.ParameterType.GetGenericTypeDefinition()) &&
+                            _config.Dependencies.ContainsKey(pi.ParameterType.GenericTypeArguments[0]))                     
                         {
                             tmp[i++] = Resolve(pi.ParameterType.GetGenericTypeDefinition()
                                 .MakeGenericType(GetDependency(pi.ParameterType.GenericTypeArguments[0])));                            
@@ -106,7 +106,7 @@ namespace DependencyInjectionContainer
                         else
                         {
                             throw new InvalidOperationException(string.Format(
-                                "Cant create an instance of{0}", implementation));
+                                "Cant create an instance of{0}", pi.ParameterType));
                         }
                     }
                     else
@@ -118,7 +118,7 @@ namespace DependencyInjectionContainer
                         else
                         {
                             throw new InvalidOperationException(string.Format(
-                                "Cant create an instance of{0}", implementation));
+                                "Cant create an instance of{0}", pi.ParameterType));
                         }
                     }
                 }
@@ -129,13 +129,20 @@ namespace DependencyInjectionContainer
             else
             {
                 throw new InvalidOperationException(string.Format(
-                    "Cant create an instance of{0}", implementation));
+                    "Cant create an instance of{0}", t));
             }
         }
 
+        /// <summary>
+        /// Get key by value from Dependencies
+        /// </summary>
+        /// <param name="t">Implementation type</param>
+        /// <returns>Dependency type</returns>
         private Type GetDependency(Type t)
         {
-            foreach(var item in _config.Dependencies)
+            return _config.Dependencies.First(x => x.Value[0].Equals(t)).Key; 
+
+            /*foreach(var item in _config.Dependencies)
             {
                 foreach(Type element in item.Value)
                 {
@@ -144,10 +151,7 @@ namespace DependencyInjectionContainer
                         return item.Key;
                     }
                 }
-            }
-
-            throw new InvalidOperationException(string.Format(
-                    "Cant create an instance of{0}", t));
+            }*/
         }        
     }
 }
