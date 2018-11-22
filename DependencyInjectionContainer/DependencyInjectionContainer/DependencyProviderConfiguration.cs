@@ -30,12 +30,17 @@ namespace DependencyInjectionContainer
         internal Dictionary<Type, bool> IsSingleton { get; set; }
 
         /// <summary>
+        /// Contains singletons
+        /// </summary>
+        internal Dictionary<Type, object> Singletons { get; set; }
+
+        /// <summary>
         /// Register dependency
         /// </summary>
         /// <typeparam name="TDependency">Dependency interface</typeparam>
         /// <typeparam name="TImplementation">Dependency implementation</typeparam>
         public void Register<TDependency, TImplementation>(bool isSingleton) 
-            where TDependency : class where TImplementation : TDependency
+            where TDependency : class where TImplementation : class, TDependency
         {
             if (!Dependencies.ContainsKey(typeof(TDependency)))
             {            
@@ -49,6 +54,20 @@ namespace DependencyInjectionContainer
             if (typeof(TDependency).IsGenericType)
             {
                 Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
+            }
+
+            if (isSingleton)
+            {
+                if (!IsSingleton.ContainsKey(typeof(TImplementation)))
+                {
+                    IsSingleton[typeof(TImplementation)] = isSingleton;
+                    Singletons[typeof(TImplementation)] = new SingletonContainer<TImplementation>();
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Cant register {0}", typeof(TDependency)));
+                }
             }
         }
     }
