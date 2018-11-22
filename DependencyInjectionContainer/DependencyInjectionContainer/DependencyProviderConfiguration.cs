@@ -48,27 +48,35 @@ namespace DependencyInjectionContainer
                 Dependencies[typeof(TDependency)] = new List<Type>();
             }
 
-            Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
-
-            IsSingleton[typeof(TDependency)] = isSingleton;
-
-            if (typeof(TDependency).IsGenericType)
+            if (Dependencies[typeof(TDependency)].IndexOf(typeof(TImplementation)) == -1)
             {
-                Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
+                Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
+
+                IsSingleton[typeof(TDependency)] = isSingleton;
+
+                if (typeof(TDependency).IsGenericType)
+                {
+                    Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
+                }
+
+                if (isSingleton)
+                {
+                    if (!IsSingleton.ContainsKey(typeof(TImplementation)))
+                    {
+                        IsSingleton[typeof(TImplementation)] = isSingleton;
+                        Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Cant register {0}", typeof(TDependency)));
+                    }
+                }
             }
-
-            if (isSingleton)
+            else
             {
-                if (!IsSingleton.ContainsKey(typeof(TImplementation)))
-                {
-                    IsSingleton[typeof(TImplementation)] = isSingleton;
-                    Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        string.Format("Cant register {0}", typeof(TDependency)));
-                }
+                throw new InvalidOperationException(
+                    string.Format("Cant register {0}", typeof(TDependency)));
             }
         }
     }

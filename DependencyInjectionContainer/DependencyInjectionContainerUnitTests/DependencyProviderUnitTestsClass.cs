@@ -108,5 +108,12 @@ namespace DependencyInjectionContainerUnitTests
         {
             _provider.Resolve<IFaker>();
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void DependencyProviderRegisterContainingrDependencyExeptionTest()
+        {
+            _config.Register<IFooService, AnotherFooImplementation>(false);
+        }
     }
 }
