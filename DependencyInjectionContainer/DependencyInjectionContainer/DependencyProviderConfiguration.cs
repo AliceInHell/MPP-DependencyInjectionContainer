@@ -43,34 +43,42 @@ namespace DependencyInjectionContainer
         public void Register<TDependency, TImplementation>(bool isSingleton) 
             where TDependency : class where TImplementation : class, TDependency
         {
-            if (!Dependencies.ContainsKey(typeof(TDependency)))
-            {            
-                Dependencies[typeof(TDependency)] = new List<Type>();
-            }
-
-            if (Dependencies[typeof(TDependency)].IndexOf(typeof(TImplementation)) == -1)
+            if (typeof(TDependency).IsInterface)
             {
-                Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
-
-                IsSingleton[typeof(TDependency)] = isSingleton;
-
-                if (typeof(TDependency).IsGenericType)
+                if (!Dependencies.ContainsKey(typeof(TDependency)))
                 {
-                    Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
+                    Dependencies[typeof(TDependency)] = new List<Type>();
                 }
 
-                if (isSingleton)
+                if (Dependencies[typeof(TDependency)].IndexOf(typeof(TImplementation)) == -1)
                 {
-                    if (!IsSingleton.ContainsKey(typeof(TImplementation)))
+                    Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
+
+                    IsSingleton[typeof(TDependency)] = isSingleton;
+
+                    if (typeof(TDependency).IsGenericType)
                     {
-                        IsSingleton[typeof(TImplementation)] = isSingleton;
-                        Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
+                        Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
                     }
-                    else
+
+                    if (isSingleton)
                     {
-                        throw new InvalidOperationException(
-                            string.Format("Cant register {0}", typeof(TDependency)));
+                        if (!IsSingleton.ContainsKey(typeof(TImplementation)))
+                        {
+                            IsSingleton[typeof(TImplementation)] = isSingleton;
+                            Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException(
+                                string.Format("Cant register {0}", typeof(TDependency)));
+                        }
                     }
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        string.Format("Cant register {0}", typeof(TDependency)));
                 }
             }
             else

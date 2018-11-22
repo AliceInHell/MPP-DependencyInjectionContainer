@@ -90,30 +90,37 @@ namespace DependencyInjectionContainerUnitTests
 
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void DependencyProviderIEnumerableExeptionTest()
+        public void DependencyProviderIEnumerableExceptionTest()
         {
             _provider.Resolve<IFooService>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void DependencyProviderIEnumerableCountExeptionTest()
+        public void DependencyProviderIEnumerableCountExceptionTest()
         {
             _provider.Resolve<IEnumerable<IBarService>>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void DependencyProviderNotRegisterDependencyExeptionTest()
+        public void DependencyProviderNotRegisterDependencyExceptionTest()
         {
             _provider.Resolve<IFaker>();
         }
 
         [TestMethod]
         [ExpectedException(typeof(InvalidOperationException))]
-        public void DependencyProviderRegisterContainingrDependencyExeptionTest()
+        public void DependencyProviderRegisterContainingDependencyExceptionTest()
         {
             _config.Register<IFooService, AnotherFooImplementation>(false);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void DependencyProviderNotInterfaceRegistrarionExceptionTest()
+        {
+            _config.Register<object, AnotherFooImplementation>(false);
         }
     }
 }
