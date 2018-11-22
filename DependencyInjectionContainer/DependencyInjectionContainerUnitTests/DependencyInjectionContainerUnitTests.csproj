@@ -66,6 +66,7 @@
     <Compile Include="Implementations\FooImplementation.cs" />
     <Compile Include="Interfaces\IBarService.cs" />
     <Compile Include="Interfaces\IBazService.cs" />
+    <Compile Include="Interfaces\IFaker.cs" />
     <Compile Include="Interfaces\IFooService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
