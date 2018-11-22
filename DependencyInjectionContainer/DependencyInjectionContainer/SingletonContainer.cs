@@ -10,23 +10,58 @@ namespace DependencyInjectionContainer
     /// Singleton container
     /// </summary>
     /// <typeparam name="TDependency">Instance type</typeparam>
-    public sealed class SingletonContainer<TDependency> where TDependency : class
+    public sealed class SingletonContainer
     {
         /// <summary>
         /// Object-locker
         /// </summary>
-        private static readonly object _locker = new object();
+        private readonly object _locker = new object();
+
+        /// <summary>
+        /// Lock property
+        /// </summary>
+        private readonly object _boolLocker = new object();
 
         /// <summary>
         /// Instance
         /// </summary>
-        private static volatile TDependency _instance = null;        
+        private volatile object _instance = null;
+
+        /// <summary>
+        /// Instance type
+        /// </summary>
+        private Type _instanceType;
+
+        /// <summary>
+        /// Status
+        /// </summary>
+        private bool _isBusy;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SingletonContainer{T}"/> class
         /// </summary>
-        public SingletonContainer()
+        public SingletonContainer(Type instanceType)
+        {            
+            _instanceType = instanceType;
+        }
+
+        /// <summary>
+        /// Check if we creating instance now
+        /// </summary>
+        public bool IsBusy
         {
+            get
+            {
+                lock (_boolLocker)
+                {
+                    return _isBusy;
+                }                
+            }
+
+            private set
+            {
+                _isBusy = value;
+            }            
         }
 
         /// <summary>
@@ -34,7 +69,7 @@ namespace DependencyInjectionContainer
         /// </summary>
         /// <param name="provider">Instance provider</param>
         /// <returns>Single instance</returns>
-        public static TDependency GetInstance(DependencyProvider provider)
+        public object GetInstance(DependencyProvider provider)
         {
             if (_instance == null)
             {
@@ -42,7 +77,17 @@ namespace DependencyInjectionContainer
                 {
                     if (_instance == null)
                     {
-                        _instance = provider.Resolve<TDependency>();
+                        lock(_boolLocker)
+                        {
+                            IsBusy = true;
+                        }
+
+                        _instance = provider.Resolve(_instanceType);
+
+                        lock(_boolLocker)
+                        {
+                            IsBusy = false;
+                        }
                     }
                 }
             }
