@@ -20,11 +20,6 @@ namespace DependencyInjectionContainer
         private readonly object _locker = new object();
 
         /// <summary>
-        /// Lock property
-        /// </summary>
-        private readonly object _boolLocker = new object();
-
-        /// <summary>
         /// Instance
         /// </summary>
         private volatile object _instance = null;
@@ -56,7 +51,7 @@ namespace DependencyInjectionContainer
         {
             get
             {
-                lock (_boolLocker)
+                lock (_locker)
                 {
                     return _isBusy;
                 }                
@@ -81,17 +76,11 @@ namespace DependencyInjectionContainer
                 {
                     if (_instance == null)
                     {
-                        lock (_boolLocker)
-                        {
-                            IsBusy = true;
-                        }
+                        IsBusy = true;
 
                         _instance = provider.Resolve(_instanceType);
 
-                        lock (_boolLocker)
-                        {
-                            IsBusy = false;
-                        }
+                        IsBusy = false;
                     }
                 }
             }
