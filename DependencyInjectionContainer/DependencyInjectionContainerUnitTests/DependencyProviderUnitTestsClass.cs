@@ -4,6 +4,7 @@ using DependencyInjectionContainer;
 using DependencyInjectionContainerUnitTests.Implementations;
 using DependencyInjectionContainerUnitTests.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace DependencyInjectionContainerUnitTests
 {
@@ -17,10 +18,11 @@ namespace DependencyInjectionContainerUnitTests
         public void Initialize()
         {
             _config = new DependencyProviderConfiguration();
-            _config.Register<IFooService, FooImplementation<BarImplementation>>(false);
+            _config.Register<IFooService, FooImplementation<BarImplementation>>(isSingleton: false);
             _config.Register<IFooService, AnotherFooImplementation>(false);
             _config.Register<IBarService, BarImplementation>(true);
             _config.Register<IBazService<BarImplementation>, AnotherBazImplementation<BarImplementation>>(false);
+            _config.Register(typeof(IBazService<>), typeof(AnotherBazImplementation<>), false);
 
             _provider = new DependencyProvider(_config);
         }
@@ -28,8 +30,8 @@ namespace DependencyInjectionContainerUnitTests
         [TestMethod]
         public void DependencyProviderEnumerableTest()
         {
-            var fooService = _provider.Resolve<IEnumerable<IFooService>>();
-            Assert.IsTrue(fooService as IEnumerable<IFooService> != null);
+            IEnumerable<IFooService> fooService = _provider.Resolve<IEnumerable<IFooService>>();
+            Assert.IsTrue(fooService != null);
         }
 
         [TestMethod]
@@ -48,33 +50,27 @@ namespace DependencyInjectionContainerUnitTests
         [TestMethod]
         public void DependencyProviderEnumerableImplementationsTest()
         {
-            FooImplementation<BarImplementation> foo= 
-                (FooImplementation<BarImplementation>)((List<IFooService>)_provider.Resolve<IEnumerable<IFooService>>())[0];
+            var impls = _provider.Resolve<IEnumerable<IFooService>>().ToArray();
+            IFooService fooImplementation = impls[0];
+            IFooService anotherFooImplementation = impls[1];
 
-            bool isFooBarImplementation = foo.BarService.GetType().Equals(typeof(BarImplementation));
-
-            bool isAnotherBazImplementation = foo.BazService.GetType().Equals(typeof(AnotherBazImplementation<BarImplementation>));
-
-            AnotherFooImplementation anotherFoo =
-                (AnotherFooImplementation)((List<IFooService>)_provider.Resolve<IEnumerable<IFooService>>())[1];
-
-            bool isAnotheFooBarImplementation = anotherFoo.BarService.GetType().Equals(typeof(BarImplementation));
-
-            Assert.IsTrue(isFooBarImplementation && isAnotherBazImplementation && isAnotheFooBarImplementation);
+            Assert.IsInstanceOfType(((FooImplementation<BarImplementation>)fooImplementation).BarService, typeof(BarImplementation));
+            Assert.IsInstanceOfType(((FooImplementation<BarImplementation>)fooImplementation).BazService, typeof(AnotherBazImplementation<BarImplementation>));
+            Assert.IsInstanceOfType(anotherFooImplementation, typeof(AnotherFooImplementation));
         }
 
         [TestMethod]
         public void DependencyProviderBarImplementationTest()
         {
             var actual = _provider.Resolve<IBarService>();
-            Assert.IsTrue(actual.GetType().Equals(typeof(BarImplementation)));
+            Assert.IsInstanceOfType(actual, (typeof(BarImplementation)));
         }
 
         [TestMethod]
         public void DependencyProviderSingletonContainerTest()
         {
             var actual = _provider.Resolve<IBarService>();
-            Assert.IsTrue(actual != null);
+            Assert.IsNotNull(actual);
         }
 
         [TestMethod]
@@ -85,7 +81,17 @@ namespace DependencyInjectionContainerUnitTests
 
             BarImplementation bar = (BarImplementation)_provider.Resolve<IBarService>();
 
-            Assert.IsTrue(anotherBaz.BarService == bar);
+            Assert.AreSame(anotherBaz.BarService, bar);
+        }
+
+        [TestMethod]
+        public void DependencyInjectionOpenGenericTest()
+        {
+            var openGeneric = _provider.Resolve<IBazService<BarImplementation>>();
+            Assert.IsNotNull(openGeneric);
+            Assert.IsInstanceOfType(
+                ((AnotherBazImplementation<BarImplementation>)openGeneric).BarService,
+                typeof(BarImplementation));
         }
 
         [TestMethod]
@@ -121,6 +127,6 @@ namespace DependencyInjectionContainerUnitTests
         public void DependencyProviderNotInterfaceRegistrarionExceptionTest()
         {
             _config.Register<object, AnotherFooImplementation>(false);
-        }
+        }        
     }
 }
