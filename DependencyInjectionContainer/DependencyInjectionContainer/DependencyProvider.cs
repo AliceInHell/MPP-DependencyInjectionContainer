@@ -44,6 +44,7 @@ namespace DependencyInjectionContainer
         /// <returns>Implementation</returns>
         internal object Resolve(Type t)
         {
+            // Singleton check
             if (_config.Dependencies.ContainsKey(t) && _config.Dependencies[t].Count == 1)
             {
                 if (_config.IsSingleton.ContainsKey(_config.Dependencies[t][0]))
@@ -56,6 +57,7 @@ namespace DependencyInjectionContainer
                 }
             }
 
+            // IEnumerable check
             if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
                 if (_config.Dependencies.ContainsKey(t.GenericTypeArguments[0]) &&
@@ -73,6 +75,7 @@ namespace DependencyInjectionContainer
             }
             else
             {
+                // Simple generic check
                 if (t.IsGenericType)
                 {
                     if (_config.Dependencies.ContainsKey(t.GetGenericTypeDefinition()) &&
@@ -86,12 +89,24 @@ namespace DependencyInjectionContainer
                         if (_config.Dependencies.ContainsKey(t.GetGenericTypeDefinition()) &&
                         _config.Dependencies.ContainsKey(GetDependency(t.GenericTypeArguments[0])))
                         {
-                            return Create(_config.Dependencies[t][0]);
+                            // Open generic check
+                            if (_config.Dependencies[t.GetGenericTypeDefinition()][0].IsGenericType &&
+                                _config.Dependencies[t.GetGenericTypeDefinition()][0].GenericTypeArguments.Count() == 0)
+                            {
+                                return Create(_config.Dependencies[t.GetGenericTypeDefinition()][0].MakeGenericType(
+                                    t.GenericTypeArguments[0]));
+                            }
+                            else
+                            {
+                                // Simple type 
+                                return Create(_config.Dependencies[t][0]);
+                            }
                         }
                     }
                 }
                 else
                 {
+                    // SImple type
                     if (_config.Dependencies.ContainsKey(t) && _config.Dependencies[t].Count == 1)
                     {
                         return Create(_config.Dependencies[t][0]);
@@ -110,6 +125,7 @@ namespace DependencyInjectionContainer
         /// <returns>Created implementation</returns>
         private object Create(Type t)
         {            
+            // Process generic
             if (t.IsGenericType && _config.Dependencies.ContainsKey(t.GenericTypeArguments[0]))
             {
                 t = t.GetGenericTypeDefinition().MakeGenericType(_config.Dependencies[t.GenericTypeArguments[0]][0]);
@@ -117,6 +133,7 @@ namespace DependencyInjectionContainer
 
             ConstructorInfo[] constructors = t.GetConstructors();
 
+            // Get constructor with maximum paraps length
             ConstructorInfo constructor = constructors
                 .OrderBy(constr => constr.GetParameters().Length)
                 .Last();
@@ -127,6 +144,7 @@ namespace DependencyInjectionContainer
                 object[] tmp = new object[parameters.Length];
                 int i = 0;
 
+                // Creating params
                 foreach (ParameterInfo pi in parameters)
                 {
                     if (pi.ParameterType.IsGenericType)
@@ -175,17 +193,6 @@ namespace DependencyInjectionContainer
         private Type GetDependency(Type t)
         {
             return _config.Dependencies.First(x => x.Value[0].Equals(t)).Key; 
-
-            /*foreach(var item in _config.Dependencies)
-            {
-                foreach(Type element in item.Value)
-                {
-                    if (element.Equals(t))
-                    {
-                        return item.Key;
-                    }
-                }
-            }*/
         }
 
         #endregion

@@ -45,46 +45,71 @@ namespace DependencyInjectionContainer
         {
             if (typeof(TDependency).IsInterface)
             {
-                if (!Dependencies.ContainsKey(typeof(TDependency)))
-                {
-                    Dependencies[typeof(TDependency)] = new List<Type>();
-                }
-
-                if (Dependencies[typeof(TDependency)].IndexOf(typeof(TImplementation)) == -1)
-                {
-                    Dependencies[typeof(TDependency)].Add(typeof(TImplementation));
-
-                    IsSingleton[typeof(TDependency)] = isSingleton;
-
-                    if (typeof(TDependency).IsGenericType)
-                    {
-                        Dependencies[typeof(TDependency).GetGenericTypeDefinition()] = null;
-                    }
-
-                    if (isSingleton)
-                    {
-                        if (!IsSingleton.ContainsKey(typeof(TImplementation)))
-                        {
-                            IsSingleton[typeof(TImplementation)] = isSingleton;
-                            Singletons[typeof(TImplementation)] = new SingletonContainer(typeof(TDependency));
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException(
-                                string.Format("Cant register {0}", typeof(TDependency)));
-                        }
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        string.Format("Cant register {0}", typeof(TDependency)));
-                }
+                RegisterDependency(typeof(TDependency), typeof(TImplementation), isSingleton);
             }
             else
             {
                 throw new InvalidOperationException(
                     string.Format("Cant register {0}", typeof(TDependency)));
+            }
+        }
+
+        /// <summary>
+        /// Register open generics
+        /// </summary>
+        /// <param name="dependencyType">Dependency type</param>
+        /// <param name="implementationType">Implementation type</param>
+        /// <param name="isSingleton">True if instance is singleton</param>
+        public void Register(Type dependencyType, Type implementationType, bool isSingleton)
+        {
+            if (dependencyType.IsGenericType)               
+            {
+                RegisterDependency(dependencyType, implementationType, isSingleton);
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    string.Format("Cant register {0}", dependencyType));
+            }
+        }
+
+        /// <summary>
+        /// Registration realization
+        /// </summary>
+        /// <param name="dependencyType">Dependency type</param>
+        /// <param name="implementationType">Implementation type</param>
+        /// <param name="isSingleton">True if instance is singleton</param>
+        private void RegisterDependency(Type dependencyType, Type implementationType, bool isSingleton)
+        {            
+            if (!Dependencies.ContainsKey(dependencyType))
+            {
+                Dependencies[dependencyType] = new List<Type>();
+            }
+
+            if (Dependencies[dependencyType].IndexOf(implementationType) == -1)
+            {
+                Dependencies[dependencyType].Add(implementationType);
+
+                IsSingleton[dependencyType] = isSingleton;
+
+                if (isSingleton)
+                {                    
+                    if (!IsSingleton.ContainsKey(implementationType))
+                    {
+                        IsSingleton[implementationType] = isSingleton;
+                        Singletons[implementationType] = new SingletonContainer(dependencyType);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Cant register {0}", dependencyType));
+                    }
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    string.Format("Cant register {0}", dependencyType));
             }
         }
     }
