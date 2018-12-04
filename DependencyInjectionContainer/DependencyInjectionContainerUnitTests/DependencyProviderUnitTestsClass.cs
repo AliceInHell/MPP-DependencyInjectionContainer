@@ -20,7 +20,7 @@ namespace DependencyInjectionContainerUnitTests
             _config = new DependencyProviderConfiguration();
             _config.Register<IFooService, FooImplementation<BarImplementation>>(isSingleton: false);
             _config.Register<IFooService, AnotherFooImplementation>(false);
-            _config.Register<IBarService, BarImplementation>(true);
+            _config.Register<IBarService, BarImplementation>(true);            
             _config.Register<IBazService<BarImplementation>, AnotherBazImplementation<BarImplementation>>(false);
             _config.Register(typeof(IBazService<>), typeof(AnotherBazImplementation<>), false);
 
@@ -87,10 +87,9 @@ namespace DependencyInjectionContainerUnitTests
         [TestMethod]
         public void DependencyInjectionOpenGenericTest()
         {
-            var openGeneric = _provider.Resolve<IBazService<BarImplementation>>();
-            Assert.IsNotNull(openGeneric);
+            var openGeneric = _provider.Resolve<IBazService<IBarService>>();            
             Assert.IsInstanceOfType(
-                ((AnotherBazImplementation<BarImplementation>)openGeneric).BarService,
+                ((AnotherBazImplementation<IBarService>)openGeneric).BarService,
                 typeof(BarImplementation));
         }
 

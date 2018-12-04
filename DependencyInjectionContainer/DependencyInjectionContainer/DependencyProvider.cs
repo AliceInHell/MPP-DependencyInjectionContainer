@@ -169,8 +169,15 @@ namespace DependencyInjectionContainer
                         }
                         else
                         {
-                            throw new InvalidOperationException(string.Format(
-                                "Cant create an instance of{0}", pi.ParameterType));
+                            if (_config.Dependencies.ContainsKey(GetDependency(pi.ParameterType)))
+                            {
+                                tmp[i++] = Resolve(GetDependency(pi.ParameterType));
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException(string.Format(
+                                    "Cant create an instance of{0}", pi.ParameterType));
+                            }
                         }
                     }
                 }

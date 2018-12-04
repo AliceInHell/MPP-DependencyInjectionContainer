@@ -10,9 +10,9 @@ namespace DependencyInjectionContainerUnitTests.Implementations
     {
         public T GenericParameter { get; set; }
 
-        public IBarService BarService { get; set; }
+        public T BarService { get; set; }
 
-        public AnotherBazImplementation(IBarService barService)
+        public AnotherBazImplementation(T barService)
         {
             BarService = barService;
         }

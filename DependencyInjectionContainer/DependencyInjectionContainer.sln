@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyInjectionContaine
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyInjectionContainerUnitTests", "DependencyInjectionContainerUnitTests\DependencyInjectionContainerUnitTests.csproj", "{B7756EB8-21F1-4B10-AB99-1279CF32868B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTests", "ConsoleTests\ConsoleTests.csproj", "{BA767746-9325-4CEE-888C-C9D9F6920896}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B7756EB8-21F1-4B10-AB99-1279CF32868B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7756EB8-21F1-4B10-AB99-1279CF32868B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7756EB8-21F1-4B10-AB99-1279CF32868B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA767746-9325-4CEE-888C-C9D9F6920896}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA767746-9325-4CEE-888C-C9D9F6920896}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA767746-9325-4CEE-888C-C9D9F6920896}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA767746-9325-4CEE-888C-C9D9F6920896}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
